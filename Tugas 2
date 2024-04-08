@@ -1,0 +1,46 @@
+Install LXC on Ubuntu 22 (WSL).
+sudo apt update
+sudo apt install lxc
+Create the required containers for each microservice.
+For Microservice 1 (Ubuntu Focal):
+lxc init ubuntu:20.04 ms1
+For Microservice 2 (Ubuntu Bionic):
+lxc init ubuntu:18.04 ms2
+For Microservices 4, 5, and 6 (Debian 10):
+lxc init debian:10 ms4
+lxc init debian:10 ms5
+lxc init debian:10 ms6
+Start the containers :
+lxc start ms1
+lxc start ms2
+lxc start ms4
+lxc start ms5
+lxc start ms6
+Configure Nginx web server on Ubuntu 22 (WSL) to use the Round Robin algorithm for load balancing.
+First, install Nginx:
+sudo apt install nginx
+Then, create a new Nginx configuration file for load balancing:
+sudo nano /etc/nginx/sites-available/load-balancer
+Replacing the IP addresses with the correct ones for your containers:
+upstream app.sister.local {
+    server <container-ip-ms1>;
+    server <container-ip-ms2>;
+    server <container-ip-ms4>;
+    server <container-ip-ms5>;
+    server <container-ip-ms6>;
+}
+
+server {
+    listen 80;
+
+    location / {
+        proxy_pass http://app.sister.local;
+    }
+}
+Enable the new configuration and disable the default configuration:
+sudo ln -s /etc/nginx/sites-available/load-balancer /etc/nginx/sites-enabled/
+sudo rm /etc/nginx/sites-enabled/default
+Restart Nginx to apply the changes:
+sudo systemctl restart nginx
+You can find the container IP addresses using the following command:
+lxc list
